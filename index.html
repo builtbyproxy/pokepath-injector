@@ -185,6 +185,29 @@
   .copy-btn-exp.copied { background: #43a047; color: #fff; pointer-events: none; }
   .copy-btn-exp:disabled { background: #555; color: #888; cursor: not-allowed; }
 
+  .exp-row {
+    display: flex; align-items: center; gap: .6rem;
+    flex-wrap: wrap; margin-bottom: .6rem;
+  }
+
+  .exp-label {
+    font-size: .6rem; color: #efcf00;
+  }
+
+  .exp-input {
+    width: 160px; padding: 4px 8px;
+    background: #0d1117; border: 1px solid #0f3460; border-radius: 4px;
+    color: #e0e0e0; font-family: 'Press Start 2P', monospace; font-size: .55rem;
+    outline: none;
+  }
+
+  .exp-input:focus { border-color: #fb8c00; }
+  .exp-input::placeholder { color: #555; }
+
+  .exp-divider {
+    border: none; border-top: 1px solid #0f3460; margin: .8rem 0;
+  }
+
   .copy-hint { margin-top: .6rem; color: #666; font-size: .5rem; }
 
   /* Collapsible sections */
@@ -322,6 +345,15 @@
         <button class="copy-btn-exp" id="copy-btn-poke" disabled>Copy Command</button>
       </div>
       <p class="exp-note">Adds a Lv.1 Gholdengo to your PC box. In-game this is normally unlocked by purchasing the Gimmighoul item for 10 billion gold.</p>
+
+      <hr class="exp-divider">
+
+      <div class="exp-row">
+        <span class="exp-label">Add Gold</span>
+        <input type="text" class="exp-input" id="gold-input" placeholder="e.g. 1000000" inputmode="numeric">
+        <button class="copy-btn-exp" id="copy-btn-gold" disabled>Copy Command</button>
+      </div>
+      <p class="exp-note">Adds the specified amount to your current gold balance. Max cap is $99,999,999,999.</p>
     </div>
   </details>
 
@@ -636,8 +668,25 @@ localStorage.<span class="func">setItem</span>(<span class="string">"data"</span
 
   gholdBtn.addEventListener('click', function() {
     if (!gholdCb.checked) return;
-    var cmd = '(function(){var d=JSON.parse(localStorage.getItem("data"));if(!d||!d.save){alert("ERROR: No save data found. Play the game first, then try again.");return}var box=d.save.box&&d.save.box.pokemon||[];var team=d.save.team&&d.save.team.pokemon||[];var all=box.concat(team);if(all.some(function(p){return p.specieKey==="gholdengo"})){alert("You already have Gholdengo!");return}if(!d.save.box)d.save.box={pokemon:[]};d.save.box.pokemon.push({specieKey:"gholdengo",lvl:1,targetMode:"first",favorite:false,item:null,isShiny:false,hideShiny:false,isMega:false});localStorage.setItem("data",JSON.stringify(d));alert("Gholdengo added to your PC box!\\n\\nRestart the game for changes to take effect.")})()';
+    var cmd = '(function(){var d=JSON.parse(localStorage.getItem("data"));if(!d||!d.save){alert("ERROR: No save data found. Play the game first, then try again.");return}if(!Array.isArray(d.save.box))d.save.box=[];var team=d.save.team||[];var all=d.save.box.concat(team);if(all.some(function(p){return p.specieKey==="gholdengo"})){alert("You already have Gholdengo!");return}d.save.box.push({specieKey:"gholdengo",lvl:1,targetMode:"first",favorite:false,item:null,isShiny:false,hideShiny:false,isMega:false});localStorage.setItem("data",JSON.stringify(d));alert("Gholdengo added to your PC box!\\n\\nRestart the game for changes to take effect.")})()';
     clipboardCopy(cmd, gholdBtn);
+  });
+
+  // Add gold
+  var goldInput = document.getElementById('gold-input');
+  var goldBtn = document.getElementById('copy-btn-gold');
+
+  goldInput.addEventListener('input', function() {
+    var val = parseInt(this.value.replace(/[^0-9]/g, ''), 10);
+    goldBtn.disabled = !val || val <= 0;
+  });
+
+  goldBtn.addEventListener('click', function() {
+    var raw = goldInput.value.replace(/[^0-9]/g, '');
+    var amount = parseInt(raw, 10);
+    if (!amount || amount <= 0) return;
+    var cmd = '(function(){var d=JSON.parse(localStorage.getItem("data"));if(!d||!d.save||!d.save.player){alert("ERROR: No save data found. Play the game first, then try again.");return}var before=d.save.player.gold||0;d.save.player.gold=Math.min(before+' + amount + ',99999999999);localStorage.setItem("data",JSON.stringify(d));alert("Gold: $"+before+" -> $"+d.save.player.gold+"\\n\\nRestart the game for changes to take effect.")})()';
+    clipboardCopy(cmd, goldBtn);
   });
 })();
 </script>
