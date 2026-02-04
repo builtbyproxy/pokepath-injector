@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PokéPath TD — Item Injector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    line-height: 2;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container { max-width: 760px; margin: 0 auto; }
+
+  h1 { text-align: center; font-size: 1.1rem; color: #e53935; margin-bottom: .3rem; }
+
+  .subtitle { text-align: center; color: #888; font-size: .65rem; margin-bottom: 2.5rem; }
+
+  /* Steps */
+  .step { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-start; }
+
+  .step-num {
+    flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .7rem; font-weight: bold; color: #fff;
+  }
+
+  .step:nth-child(1) .step-num { background: #e53935; }
+  .step:nth-child(2) .step-num { background: #1e88e5; }
+  .step:nth-child(3) .step-num { background: #43a047; }
+  .step:nth-child(4) .step-num { background: #fb8c00; }
+  .step:nth-child(5) .step-num { background: #8e24aa; }
+  .step:nth-child(6) .step-num { background: #00897b; }
+
+  .step-body { flex: 1; }
+  .step-title { font-size: .8rem; color: #fff; margin-bottom: .35rem; }
+  .step-desc { color: #aaa; font-size: .6rem; }
+
+  kbd {
+    display: inline-block; background: #16213e; border: 1px solid #0f3460;
+    border-radius: 4px; padding: 2px 7px; font-family: 'Press Start 2P', monospace;
+    font-size: .6rem; color: #1e88e5; white-space: nowrap;
+  }
+
+  /* Item picker */
+  .picker { margin: 1.5rem 0; }
+
+  .picker-header {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: .5rem; margin-bottom: .8rem;
+  }
+
+  .picker-title { font-size: .75rem; color: #fff; }
+
+  .picker-count {
+    font-size: .55rem; color: #43a047;
+    background: #16213e; border: 1px solid #0f3460;
+    border-radius: 4px; padding: 3px 8px;
+  }
+
+  .search-box {
+    width: 100%; padding: .5rem .7rem;
+    background: #16213e; border: 1px solid #0f3460; border-radius: 4px;
+    color: #e0e0e0; font-family: 'Press Start 2P', monospace; font-size: .6rem;
+    outline: none; margin-bottom: .6rem;
+  }
+
+  .search-box:focus { border-color: #1e88e5; }
+  .search-box::placeholder { color: #555; }
+
+  .picker-actions {
+    display: flex; gap: .5rem; margin-bottom: .6rem; flex-wrap: wrap;
+  }
+
+  .picker-actions button {
+    font-family: 'Press Start 2P', monospace; font-size: .5rem;
+    background: #16213e; border: 1px solid #0f3460; border-radius: 4px;
+    color: #1e88e5; padding: 4px 10px; cursor: pointer;
+  }
+
+  .picker-actions button:hover { background: #0f3460; }
+
+  .item-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 4px; max-height: 320px; overflow-y: auto;
+    border: 1px solid #0f3460; border-radius: 6px; padding: 6px;
+    background: #0d1117;
+  }
+
+  .item-grid::-webkit-scrollbar { width: 8px; }
+  .item-grid::-webkit-scrollbar-track { background: #0d1117; }
+  .item-grid::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 4px; }
+
+  .item-opt {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 8px; border-radius: 4px; cursor: pointer;
+    transition: background .1s; font-size: .55rem; color: #bbb;
+    user-select: none;
+  }
+
+  .item-opt:hover { background: #16213e; }
+  .item-opt.checked { background: #1a3a1a; color: #43a047; }
+  .item-opt.hidden { display: none; }
+
+  .item-opt input[type="checkbox"] {
+    accent-color: #43a047; width: 14px; height: 14px; cursor: pointer; flex-shrink: 0;
+  }
+
+  .item-opt .item-tag {
+    font-size: .4rem; padding: 1px 5px; border-radius: 3px;
+    margin-left: auto; flex-shrink: 0;
+  }
+
+  .tag-mega { background: #4a148c; color: #ce93d8; }
+  .tag-rare { background: #b71c1c; color: #ef9a9a; }
+  .tag-fossil { background: #4e342e; color: #bcaaa4; }
+
+  /* Copy button area */
+  .copy-area { margin: 2rem 0; text-align: center; }
+
+  .copy-btn {
+    font-family: 'Press Start 2P', monospace; font-size: .75rem;
+    background: #e53935; color: #fff; border: none;
+    padding: .9rem 1.6rem; cursor: pointer; border-radius: 6px;
+    transition: background .15s, transform .1s;
+  }
+
+  .copy-btn:hover { background: #c62828; }
+  .copy-btn:active { transform: scale(.96); }
+  .copy-btn.copied { background: #43a047; pointer-events: none; }
+  .copy-btn:disabled { background: #555; cursor: not-allowed; }
+
+  .copy-hint { margin-top: .6rem; color: #666; font-size: .5rem; }
+
+  /* Collapsible sections */
+  details {
+    margin-bottom: 1.2rem; border: 1px solid #0f3460;
+    border-radius: 6px; overflow: hidden;
+  }
+
+  summary {
+    background: #16213e; padding: .8rem 1rem; cursor: pointer;
+    font-size: .7rem; color: #1e88e5; list-style: none;
+  }
+
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: '+ '; color: #43a047; }
+  details[open] summary::before { content: '- '; }
+
+  .details-body { padding: 1rem; font-size: .55rem; line-height: 2.2; color: #bbb; }
+
+  pre {
+    background: #0d1117; border: 1px solid #0f3460; border-radius: 4px;
+    padding: .8rem; overflow-x: auto; font-family: 'Courier New', Courier, monospace;
+    font-size: .65rem; line-height: 1.8; color: #c9d1d9;
+    white-space: pre-wrap; word-break: break-word;
+  }
+
+  .comment { color: #6a737d; }
+  .keyword { color: #ff7b72; }
+  .string { color: #a5d6ff; }
+  .func { color: #d2a8ff; }
+
+  .faq-q { color: #fb8c00; margin-bottom: .2rem; }
+  .faq-a { margin-bottom: 1rem; }
+
+  .divider { border: none; border-top: 1px solid #0f3460; margin: 2rem 0; }
+
+  @media (max-width: 500px) {
+    body { font-size: 10px; padding: 1rem .5rem; }
+    .copy-btn { padding: .7rem 1rem; font-size: .65rem; }
+    .item-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>PokéPath TD</h1>
+  <p class="subtitle">Item Injector</p>
+
+  <!-- Steps -->
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <div class="step-title">Open PokéPath TD</div>
+      <div class="step-desc">Launch the game and load your save (reach the map screen).</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <div class="step-title">Choose items below</div>
+      <div class="step-desc">Select one or more items to add to your inventory.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <div class="step-title">Open Developer Tools</div>
+      <div class="step-desc">Press <kbd id="shortcut-keys">...</kbd> while the game window is focused.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <div class="step-title">Click the Console tab</div>
+      <div class="step-desc">At the top of the DevTools panel, click <strong>Console</strong>.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <div class="step-title">Paste the command</div>
+      <div class="step-desc">Click "Copy Command" below, paste into the console and press <kbd>Enter</kbd>.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-body">
+      <div class="step-title">Restart the game</div>
+      <div class="step-desc">Close DevTools, then quit and relaunch PokéPath TD. The items will be in your inventory.</div>
+    </div>
+  </div>
+
+  <!-- Item picker -->
+  <div class="picker">
+    <div class="picker-header">
+      <span class="picker-title">Select Items</span>
+      <span class="picker-count" id="picker-count">0 selected</span>
+    </div>
+    <input type="text" class="search-box" id="search" placeholder="Search items...">
+    <div class="picker-actions">
+      <button id="btn-all">Select All</button>
+      <button id="btn-none">Select None</button>
+      <button id="btn-mega">Mega Stones</button>
+      <button id="btn-rare">Rare / Expensive</button>
+    </div>
+    <div class="item-grid" id="item-grid"></div>
+  </div>
+
+  <!-- Copy button -->
+  <div class="copy-area">
+    <button class="copy-btn" id="copy-btn" disabled>Copy Command</button>
+    <p class="copy-hint">Then paste into the game's Console with <span id="paste-shortcut">...</span></p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- What does this do? -->
+  <details>
+    <summary>What does this do?</summary>
+    <div class="details-body">
+      <p>The command reads your save data from <code>localStorage</code>, adds the selected items (skipping any you already own), and writes it back. Here's the logic:</p>
+      <pre><span class="comment">// 1. Read save data from localStorage</span>
+<span class="keyword">var</span> d = JSON.<span class="func">parse</span>(localStorage.<span class="func">getItem</span>(<span class="string">"data"</span>));
+
+<span class="comment">// 2. Check save data exists</span>
+<span class="keyword">if</span> (!d || !d.save || !d.save.player || !d.save.player.items) {
+  <span class="func">alert</span>(<span class="string">"ERROR: No save data found."</span>);
+  <span class="keyword">return</span>;
+}
+
+<span class="comment">// 3. For each selected item, add if not already owned</span>
+<span class="keyword">var</span> added = [];
+<span class="keyword">var</span> skipped = [];
+selectedItems.<span class="func">forEach</span>(<span class="keyword">function</span>(id) {
+  <span class="keyword">if</span> (d.save.player.items.<span class="func">some</span>(<span class="keyword">function</span>(i) {
+    <span class="keyword">return</span> i.id === id;
+  })) {
+    skipped.<span class="func">push</span>(id);
+  } <span class="keyword">else</span> {
+    d.save.player.items.<span class="func">push</span>({ id: id });
+    added.<span class="func">push</span>(id);
+  }
+});
+
+<span class="comment">// 4. Save and report results</span>
+localStorage.<span class="func">setItem</span>(<span class="string">"data"</span>, JSON.<span class="func">stringify</span>(d));
+<span class="func">alert</span>(<span class="string">"Added: "</span> + added.length + <span class="string">", Skipped: "</span> + skipped.length);</pre>
+    </div>
+  </details>
+
+  <!-- FAQ -->
+  <details>
+    <summary>FAQ / Troubleshooting</summary>
+    <div class="details-body">
+      <p class="faq-q">Q: DevTools won't open</p>
+      <p class="faq-a">Make sure the game window is focused (click on it first). On Mac use <kbd>Cmd+Option+I</kbd>, on Windows/Linux use <kbd>Ctrl+Shift+I</kbd>. If the shortcut conflicts with another app, try <kbd>F12</kbd> on Windows/Linux.</p>
+
+      <p class="faq-q">Q: I see "No save data found"</p>
+      <p class="faq-a">You need to have played the game at least once so a save file exists. Start a new game, reach the map, then try again.</p>
+
+      <p class="faq-q">Q: Items say "skipped"</p>
+      <p class="faq-a">Skipped items are ones you already own. Only new items get added.</p>
+
+      <p class="faq-q">Q: Nothing happened after pasting</p>
+      <p class="faq-a">Make sure you pasted into the <strong>Console</strong> tab (not Elements or Sources). Also make sure you pressed <kbd>Enter</kbd> after pasting. You should see an alert pop up.</p>
+
+      <p class="faq-q">Q: Items don't appear after restart</p>
+      <p class="faq-a">Make sure you fully quit the game (not just close the window) and relaunch it. The save is written to localStorage, which persists between sessions.</p>
+    </div>
+  </details>
+
+</div>
+
+<script>
+(function() {
+  // Complete item database: [id, display name, tag]
+  // Tags: "mega", "rare", "fossil", or "" (normal)
+  var ITEMS = [
+    ["absolite","Absolite","mega"],
+    ["adrenalineOrb","Adrenaline Orb",""],
+    ["airBalloon","Air Balloon",""],
+    ["alakazite","Alakazite","mega"],
+    ["amuletCoin","Amulet Coin",""],
+    ["ancientShield","Ancient Shield",""],
+    ["ancientSword","Ancient Sword",""],
+    ["assaultVest","Assault Vest",""],
+    ["badgeOfHonor","Badge Of Honor",""],
+    ["berryJuice","Berry Juice",""],
+    ["bicycle","Segmental's Bicycle","rare"],
+    ["bigRoot","Big Root",""],
+    ["bindingBand","Binding Band",""],
+    ["blackGlasses","Black Glasses",""],
+    ["blueBandana","Blue Bandana",""],
+    ["carbos","Carbos",""],
+    ["cellBattery","Cell Battery",""],
+    ["charizarditeX","Charizardite X","mega"],
+    ["cherryBlossom","Cherry Blossom",""],
+    ["choiceScarf","Choice Scarf",""],
+    ["clawFossil","Claw Fossil","fossil"],
+    ["clefairyDoll","Clefairy Doll",""],
+    ["clover","Clover",""],
+    ["condensedBlizzard","Condensed Blizzard",""],
+    ["dampMulch","Damp Mulch",""],
+    ["direHit","Dire Hit",""],
+    ["domeFossil","Dome Fossil","fossil"],
+    ["dragonFang","Dragon Fang",""],
+    ["ejectButton","Eject Button",""],
+    ["electirizer","Electirizer",""],
+    ["falmeOrb","Flame Orb",""],
+    ["fertiliser","Fertiliser",""],
+    ["focusBand","Focus Band",""],
+    ["gimmighoul","Gimmighoul","rare"],
+    ["hardStone","Hard Stone",""],
+    ["heartScale","Heart Scale",""],
+    ["heatRock","Heat Rock",""],
+    ["heavyDutyBoots","Heavy-Duty Boots",""],
+    ["helixFossil","Helix Fossil","fossil"],
+    ["hikingKit","Hiking Kit",""],
+    ["inverter","Inverter",""],
+    ["leek","Leek",""],
+    ["leftovers","Leftovers",""],
+    ["lifeOrb","Life Orb",""],
+    ["lightBall","Light Ball",""],
+    ["lightClay","Light Clay",""],
+    ["litCoal","Lit Coal",""],
+    ["loadedDice","Loaded Dice",""],
+    ["magmarizer","Magmarizer",""],
+    ["magnet","Magnet",""],
+    ["metalPowder","Metal Powder",""],
+    ["metronome","Metronome",""],
+    ["muscleBand","Muscle Band",""],
+    ["nanabBerry","Nanab Berry",""],
+    ["nightmareCloth","Nightmare Cloth",""],
+    ["oldRod","Old Rod",""],
+    ["poisonBarb","Poison Barb",""],
+    ["protein","Protein",""],
+    ["quickClaw","Quick Claw",""],
+    ["quickPowder","Quick Powder",""],
+    ["razorClaw","Razor Claw",""],
+    ["revelationAroma","Revelation Aroma",""],
+    ["ringTarget","Ring Target",""],
+    ["rockyHelmet","Rocky Helmet",""],
+    ["sceptilite","Sceptilite","mega"],
+    ["sharpBeak","Sharp Beak",""],
+    ["shellBell","Shell Bell",""],
+    ["shieldBreakerBullet","Shield Breaker Bullet",""],
+    ["shinyCharm","Shiny Charm","rare"],
+    ["silphScope","Silph Scope",""],
+    ["sniperScope","Sniper Scope",""],
+    ["softSand","Soft Sand",""],
+    ["spellTag","Spell Tag",""],
+    ["spindaCocktail","Spinda Cocktail",""],
+    ["spindasSpecialDelivery","Spinda's Special Delivery",""],
+    ["sprayduck","Sprayduck",""],
+    ["squirtBottle","Squirt Bottle",""],
+    ["starCandy","Star Candy",""],
+    ["starPiece","Star Piece",""],
+    ["stickyBarb","Sticky Barb",""],
+    ["strangeIdol","Strange Idol",""],
+    ["stretchySpring","Stretchy Spring",""],
+    ["subwoofer","Subwoofer",""],
+    ["sunflowerPetal","Sunflower Petal",""],
+    ["thickClub","Thick Club",""],
+    ["toxicOrb","Toxic Orb",""],
+    ["twistedSpoon","Twisted Spoon",""],
+    ["weaknessPolicy","Weakness Policy",""],
+    ["wideLens","Wide Lens",""],
+    ["wrestlingMask","Wrestling Mask",""],
+    ["xAttack","X-Attack",""],
+    ["zoomLens","Zoom Lens",""]
+  ];
+
+  // Platform detection
+  var isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+  document.getElementById('shortcut-keys').textContent = isMac ? 'Cmd + Option + I' : 'Ctrl + Shift + I';
+  document.getElementById('paste-shortcut').innerHTML = isMac ? '<kbd>Cmd+V</kbd>' : '<kbd>Ctrl+V</kbd>';
+
+  // Build item grid
+  var grid = document.getElementById('item-grid');
+  var countEl = document.getElementById('picker-count');
+  var copyBtn = document.getElementById('copy-btn');
+
+  ITEMS.forEach(function(item) {
+    var id = item[0], name = item[1], tag = item[2];
+    var label = document.createElement('label');
+    label.className = 'item-opt';
+    label.dataset.id = id;
+    label.dataset.tag = tag;
+    label.dataset.search = name.toLowerCase();
+
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = id;
+    if (id === 'bicycle') cb.checked = true;
+
+    var span = document.createElement('span');
+    span.textContent = name;
+
+    label.appendChild(cb);
+    label.appendChild(span);
+
+    if (tag) {
+      var tagEl = document.createElement('span');
+      tagEl.className = 'item-tag tag-' + tag;
+      tagEl.textContent = tag === 'mega' ? 'MEGA' : tag === 'rare' ? 'RARE' : tag === 'fossil' ? 'FOSSIL' : '';
+      label.appendChild(tagEl);
+    }
+
+    grid.appendChild(label);
+  });
+
+  function updateState() {
+    var checked = grid.querySelectorAll('input:checked');
+    var n = checked.length;
+    countEl.textContent = n + ' selected';
+    copyBtn.disabled = n === 0;
+
+    var opts = grid.querySelectorAll('.item-opt');
+    for (var i = 0; i < opts.length; i++) {
+      var cb = opts[i].querySelector('input');
+      if (cb.checked) {
+        opts[i].classList.add('checked');
+      } else {
+        opts[i].classList.remove('checked');
+      }
+    }
+  }
+
+  updateState();
+
+  grid.addEventListener('change', updateState);
+
+  // Search
+  document.getElementById('search').addEventListener('input', function() {
+    var q = this.value.toLowerCase();
+    var opts = grid.querySelectorAll('.item-opt');
+    for (var i = 0; i < opts.length; i++) {
+      if (!q || opts[i].dataset.search.indexOf(q) !== -1 || opts[i].dataset.id.toLowerCase().indexOf(q) !== -1) {
+        opts[i].classList.remove('hidden');
+      } else {
+        opts[i].classList.add('hidden');
+      }
+    }
+  });
+
+  // Quick-select buttons
+  function setAll(val) {
+    var cbs = grid.querySelectorAll('.item-opt:not(.hidden) input');
+    for (var i = 0; i < cbs.length; i++) cbs[i].checked = val;
+    updateState();
+  }
+
+  function selectByTag(tag) {
+    var cbs = grid.querySelectorAll('input');
+    for (var i = 0; i < cbs.length; i++) cbs[i].checked = false;
+    var tagged = grid.querySelectorAll('.item-opt[data-tag="' + tag + '"] input');
+    for (var i = 0; i < tagged.length; i++) tagged[i].checked = true;
+    updateState();
+  }
+
+  document.getElementById('btn-all').addEventListener('click', function() { setAll(true); });
+  document.getElementById('btn-none').addEventListener('click', function() { setAll(false); });
+  document.getElementById('btn-mega').addEventListener('click', function() { selectByTag('mega'); });
+  document.getElementById('btn-rare').addEventListener('click', function() { selectByTag('rare'); });
+
+  // Build command from selection
+  function buildCommand() {
+    var checked = grid.querySelectorAll('input:checked');
+    var ids = [];
+    for (var i = 0; i < checked.length; i++) ids.push(checked[i].value);
+    if (ids.length === 0) return '';
+
+    var idsJson = JSON.stringify(ids);
+    return '(function(){var d=JSON.parse(localStorage.getItem("data"));if(!d||!d.save||!d.save.player||!d.save.player.items){alert("ERROR: No save data found. Play the game first, then try again.");return}var want=' + idsJson + ';var added=[];var skipped=[];want.forEach(function(id){if(d.save.player.items.some(function(i){return i.id===id})){skipped.push(id)}else{d.save.player.items.push({id:id});added.push(id)}});localStorage.setItem("data",JSON.stringify(d));alert("Added "+added.length+" item(s): "+(added.join(", ")||"none")+"\\nSkipped "+skipped.length+" (already owned): "+(skipped.join(", ")||"none")+"\\n\\nRestart the game for changes to take effect.")})()';
+  }
+
+  // Copy
+  function doCopy(text) {
+    copyBtn.textContent = 'Copied!';
+    copyBtn.classList.add('copied');
+    setTimeout(function() {
+      copyBtn.textContent = 'Copy Command';
+      copyBtn.classList.remove('copied');
+    }, 2000);
+  }
+
+  copyBtn.addEventListener('click', function() {
+    var cmd = buildCommand();
+    if (!cmd) return;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(cmd).then(function() {
+        doCopy();
+      }, fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+
+    function fallbackCopy() {
+      var ta = document.createElement('textarea');
+      ta.value = cmd;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        doCopy();
+      } catch (e) {
+        copyBtn.textContent = 'Copy failed';
+        setTimeout(function() { copyBtn.textContent = 'Copy Command'; }, 2000);
+      }
+      document.body.removeChild(ta);
+    }
+  });
+})();
+</script>
+</body>
+</html>
