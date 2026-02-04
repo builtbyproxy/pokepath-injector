@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PokéPath TD — Item Injector</title>
 <link rel="icon" href="https://pokepath.gg/favicon.ico">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-V87QB16CTK"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-V87QB16CTK');
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -656,6 +664,13 @@ localStorage.<span class="func">setItem</span>(<span class="string">"data"</span
   copyBtn.addEventListener('click', function() {
     var cmd = buildCommand();
     if (!cmd) return;
+    var checked = grid.querySelectorAll('input:checked');
+    var names = [];
+    for (var i = 0; i < checked.length; i++) names.push(checked[i].value);
+    gtag('event', 'copy_items', {
+      items: names.join(', '),
+      item_count: names.length
+    });
     clipboardCopy(cmd, copyBtn);
   });
 
@@ -669,6 +684,7 @@ localStorage.<span class="func">setItem</span>(<span class="string">"data"</span
 
   gholdBtn.addEventListener('click', function() {
     if (!gholdCb.checked) return;
+    gtag('event', 'copy_gholdengo');
     var cmd = '(function(){var d=JSON.parse(localStorage.getItem("data"));if(!d||!d.save){alert("ERROR: No save data found. Play the game first, then try again.");return}if(!Array.isArray(d.save.box))d.save.box=[];var team=d.save.team||[];var all=d.save.box.concat(team);if(all.some(function(p){return p.specieKey==="gholdengo"})){alert("You already have Gholdengo!");return}d.save.box.push({specieKey:"gholdengo",lvl:1,targetMode:"first",favorite:false,item:null,isShiny:false,hideShiny:false,isMega:false});localStorage.setItem("data",JSON.stringify(d));alert("Gholdengo added to your PC box!\\n\\nRestart the game for changes to take effect.")})()';
     clipboardCopy(cmd, gholdBtn);
   });
@@ -686,6 +702,9 @@ localStorage.<span class="func">setItem</span>(<span class="string">"data"</span
     var raw = goldInput.value.replace(/[^0-9]/g, '');
     var amount = parseInt(raw, 10);
     if (!amount || amount <= 0) return;
+    gtag('event', 'copy_gold', {
+      gold_amount: amount
+    });
     var cmd = '(function(){var d=JSON.parse(localStorage.getItem("data"));if(!d||!d.save||!d.save.player){alert("ERROR: No save data found. Play the game first, then try again.");return}var before=d.save.player.gold||0;d.save.player.gold=Math.min(before+' + amount + ',99999999999);localStorage.setItem("data",JSON.stringify(d));alert("Gold: $"+before+" -> $"+d.save.player.gold+"\\n\\nRestart the game for changes to take effect.")})()';
     clipboardCopy(cmd, goldBtn);
   });
