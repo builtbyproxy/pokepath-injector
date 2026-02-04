@@ -1,5 +1,7 @@
 # PokéPath TD Item Injector
 
+![Supports up to](https://img.shields.io/badge/supports%20up%20to-v1.4-brightgreen)
+
 Add items to your [PokéPath TD](https://pokepath.gg) inventory via the browser DevTools console.
 
 **https://builtbyproxy.github.io/pokepath-injector/**
