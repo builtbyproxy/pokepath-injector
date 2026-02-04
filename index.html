@@ -140,6 +140,51 @@
   .copy-btn.copied { background: #43a047; pointer-events: none; }
   .copy-btn:disabled { background: #555; cursor: not-allowed; }
 
+  /* Experimental features */
+  .experimental summary {
+    color: #fb8c00;
+  }
+
+  .experimental summary::before { color: #fb8c00; }
+
+  .exp-pokemon-row {
+    display: flex; align-items: center; gap: .8rem;
+    flex-wrap: wrap; margin-bottom: .6rem;
+  }
+
+  .exp-pokemon-opt {
+    display: flex; align-items: center; gap: 6px;
+    font-size: .6rem; color: #bbb; cursor: pointer; user-select: none;
+  }
+
+  .exp-pokemon-opt input[type="checkbox"] {
+    accent-color: #efcf00; width: 14px; height: 14px; cursor: pointer;
+  }
+
+  .exp-pokemon-opt .poke-name { color: #efcf00; }
+
+  .exp-pokemon-opt .item-tag {
+    font-size: .4rem; padding: 1px 5px; border-radius: 3px;
+  }
+
+  .tag-secret { background: #4a148c; color: #ce93d8; }
+
+  .exp-note {
+    font-size: .5rem; color: #777; margin-top: .6rem;
+  }
+
+  .copy-btn-exp {
+    font-family: 'Press Start 2P', monospace; font-size: .6rem;
+    background: #fb8c00; color: #1a1a2e; border: none;
+    padding: .6rem 1.2rem; cursor: pointer; border-radius: 6px;
+    transition: background .15s, transform .1s; margin-left: auto;
+  }
+
+  .copy-btn-exp:hover { background: #e65100; }
+  .copy-btn-exp:active { transform: scale(.96); }
+  .copy-btn-exp.copied { background: #43a047; color: #fff; pointer-events: none; }
+  .copy-btn-exp:disabled { background: #555; color: #888; cursor: not-allowed; }
+
   .copy-hint { margin-top: .6rem; color: #666; font-size: .5rem; }
 
   /* Collapsible sections */
@@ -262,6 +307,24 @@
 
   <hr class="divider">
 
+  <!-- Experimental Features -->
+  <details class="experimental">
+    <summary>Experimental Features</summary>
+    <div class="details-body">
+      <p style="margin-bottom: .8rem;">These inject directly into your save data. Use a separate paste from the item command above.</p>
+
+      <div class="exp-pokemon-row">
+        <label class="exp-pokemon-opt">
+          <input type="checkbox" id="gholdengo-cb" value="gholdengo">
+          <span class="poke-name">Gholdengo</span>
+          <span class="item-tag tag-secret">SECRET</span>
+        </label>
+        <button class="copy-btn-exp" id="copy-btn-poke" disabled>Copy Command</button>
+      </div>
+      <p class="exp-note">Adds a Lv.1 Gholdengo to your PC box. In-game this is normally unlocked by purchasing the Gimmighoul item for 10 billion gold.</p>
+    </div>
+  </details>
+
   <!-- What does this do? -->
   <details>
     <summary>What does this do?</summary>
@@ -357,7 +420,7 @@ localStorage.<span class="func">setItem</span>(<span class="string">"data"</span
     ["falmeOrb","Flame Orb",""],
     ["fertiliser","Fertiliser",""],
     ["focusBand","Focus Band",""],
-    ["gimmighoul","Gimmighoul","rare"],
+    ["gimmighoul","Gimmighoul (unlocks Gholdengo)","rare"],
     ["hardStone","Hard Stone",""],
     ["heartScale","Heart Scale",""],
     ["heatRock","Heat Rock",""],
@@ -522,44 +585,59 @@ localStorage.<span class="func">setItem</span>(<span class="string">"data"</span
     return '(function(){var d=JSON.parse(localStorage.getItem("data"));if(!d||!d.save||!d.save.player||!d.save.player.items){alert("ERROR: No save data found. Play the game first, then try again.");return}var want=' + idsJson + ';var added=[];var skipped=[];want.forEach(function(id){if(d.save.player.items.some(function(i){return i.id===id})){skipped.push(id)}else{d.save.player.items.push({id:id});added.push(id)}});localStorage.setItem("data",JSON.stringify(d));alert("Added "+added.length+" item(s): "+(added.join(", ")||"none")+"\\nSkipped "+skipped.length+" (already owned): "+(skipped.join(", ")||"none")+"\\n\\nRestart the game for changes to take effect.")})()';
   }
 
-  // Copy
-  function doCopy(text) {
-    copyBtn.textContent = 'Copied!';
-    copyBtn.classList.add('copied');
-    setTimeout(function() {
-      copyBtn.textContent = 'Copy Command';
-      copyBtn.classList.remove('copied');
-    }, 2000);
-  }
-
-  copyBtn.addEventListener('click', function() {
-    var cmd = buildCommand();
-    if (!cmd) return;
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(cmd).then(function() {
-        doCopy();
-      }, fallbackCopy);
-    } else {
-      fallbackCopy();
+  // Copy helper
+  function clipboardCopy(text, btn) {
+    function onSuccess() {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(function() {
+        btn.textContent = 'Copy Command';
+        btn.classList.remove('copied');
+      }, 2000);
     }
 
-    function fallbackCopy() {
+    function fallback() {
       var ta = document.createElement('textarea');
-      ta.value = cmd;
+      ta.value = text;
       ta.style.position = 'fixed';
       ta.style.opacity = '0';
       document.body.appendChild(ta);
       ta.select();
       try {
         document.execCommand('copy');
-        doCopy();
+        onSuccess();
       } catch (e) {
-        copyBtn.textContent = 'Copy failed';
-        setTimeout(function() { copyBtn.textContent = 'Copy Command'; }, 2000);
+        btn.textContent = 'Copy failed';
+        setTimeout(function() { btn.textContent = 'Copy Command'; }, 2000);
       }
       document.body.removeChild(ta);
     }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(onSuccess, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  copyBtn.addEventListener('click', function() {
+    var cmd = buildCommand();
+    if (!cmd) return;
+    clipboardCopy(cmd, copyBtn);
+  });
+
+  // Gholdengo unlock
+  var gholdCb = document.getElementById('gholdengo-cb');
+  var gholdBtn = document.getElementById('copy-btn-poke');
+
+  gholdCb.addEventListener('change', function() {
+    gholdBtn.disabled = !gholdCb.checked;
+  });
+
+  gholdBtn.addEventListener('click', function() {
+    if (!gholdCb.checked) return;
+    var cmd = '(function(){var d=JSON.parse(localStorage.getItem("data"));if(!d||!d.save){alert("ERROR: No save data found. Play the game first, then try again.");return}var box=d.save.box&&d.save.box.pokemon||[];var team=d.save.team&&d.save.team.pokemon||[];var all=box.concat(team);if(all.some(function(p){return p.specieKey==="gholdengo"})){alert("You already have Gholdengo!");return}if(!d.save.box)d.save.box={pokemon:[]};d.save.box.pokemon.push({specieKey:"gholdengo",lvl:1,targetMode:"first",favorite:false,item:null,isShiny:false,hideShiny:false,isMega:false});localStorage.setItem("data",JSON.stringify(d));alert("Gholdengo added to your PC box!\\n\\nRestart the game for changes to take effect.")})()';
+    clipboardCopy(cmd, gholdBtn);
   });
 })();
 </script>
