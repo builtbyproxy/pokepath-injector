@@ -34,6 +34,8 @@
   h1 { text-align: center; font-size: 1.1rem; color: #e53935; margin-bottom: .3rem; }
 
   .subtitle { text-align: center; color: #888; font-size: .65rem; margin-bottom: 2.5rem; }
+  .subtitle a { color: #1e88e5; text-decoration: none; }
+  .subtitle a:hover { text-decoration: underline; }
 
   /* Steps */
   .step { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-start; }
@@ -259,28 +261,13 @@
     .item-grid { grid-template-columns: 1fr; }
   }
 
-  .footer {
-    margin-top: 3rem;
-    text-align: center;
-    font-size: .55rem;
-    color: #666;
-  }
-
-  .footer a {
-    color: #1e88e5;
-    text-decoration: none;
-  }
-
-  .footer a:hover {
-    text-decoration: underline;
-  }
 </style>
 </head>
 <body>
 <div class="container">
 
   <h1>PokéPath TD</h1>
-  <p class="subtitle">Item Injector</p>
+  <p class="subtitle">Item Injector | By <a href="https://lachlanyoung.dev" target="_blank" rel="noopener">Lachlan Young</a></p>
 
   <!-- Steps -->
   <div class="step">
@@ -436,10 +423,6 @@ localStorage.<span class="func">setItem</span>(<span class="string">"data"</span
       <p class="faq-a">Make sure you fully quit the game (not just close the window) and relaunch it. The save is written to localStorage, which persists between sessions.</p>
     </div>
   </details>
-
-  <footer class="footer">
-    By <a href="https://lachlanyoung.dev" target="_blank" rel="noopener">Lachlan Young</a>
-  </footer>
 
 </div>
 
