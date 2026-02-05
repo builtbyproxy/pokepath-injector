@@ -258,6 +258,22 @@
     .copy-btn { padding: .7rem 1rem; font-size: .65rem; }
     .item-grid { grid-template-columns: 1fr; }
   }
+
+  .footer {
+    margin-top: 3rem;
+    text-align: center;
+    font-size: .55rem;
+    color: #666;
+  }
+
+  .footer a {
+    color: #1e88e5;
+    text-decoration: none;
+  }
+
+  .footer a:hover {
+    text-decoration: underline;
+  }
 </style>
 </head>
 <body>
@@ -420,6 +436,10 @@ localStorage.<span class="func">setItem</span>(<span class="string">"data"</span
       <p class="faq-a">Make sure you fully quit the game (not just close the window) and relaunch it. The save is written to localStorage, which persists between sessions.</p>
     </div>
   </details>
+
+  <footer class="footer">
+    By <a href="https://lachlanyoung.dev" target="_blank" rel="noopener">Lachlan Young</a>
+  </footer>
 
 </div>
 
