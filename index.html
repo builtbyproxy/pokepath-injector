@@ -366,6 +366,14 @@
         <button class="copy-btn-exp" id="copy-btn-gold" disabled>Copy Command</button>
       </div>
       <p class="exp-note">Adds the specified amount to your current gold balance. Max cap is $99,999,999,999.</p>
+
+      <hr class="exp-divider">
+
+      <div class="exp-row">
+        <span class="exp-label">Bicycle Instakill</span>
+        <button class="copy-btn-exp" id="copy-btn-instakill">Copy Command</button>
+      </div>
+      <p class="exp-note">Enables instakill for the Bicycle item. Any Pokemon with the Bicycle equipped will one-shot enemies. Run in console while playing (no restart needed). Effect lasts until game is closed.</p>
     </div>
   </details>
 
@@ -710,6 +718,15 @@ localStorage.<span class="func">setItem</span>(<span class="string">"data"</span
     });
     var cmd = '(function(){var d=JSON.parse(localStorage.getItem("data"));if(!d||!d.save||!d.save.player){alert("ERROR: No save data found. Play the game first, then try again.");return}var before=d.save.player.gold||0;d.save.player.gold=Math.min(before+' + amount + ',99999999999);localStorage.setItem("data",JSON.stringify(d));alert("Gold: $"+before+" -> $"+d.save.player.gold+"\\n\\nRestart the game for changes to take effect.")})()';
     clipboardCopy(cmd, goldBtn);
+  });
+
+  // Bicycle instakill
+  var instakillBtn = document.getElementById('copy-btn-instakill');
+
+  instakillBtn.addEventListener('click', function() {
+    gtag('event', 'copy_instakill');
+    var cmd = '(function(){if(window._bikeInstakillEnabled){alert("Bicycle instakill is already enabled!");return}var enemies=window.main?.area?.enemies;if(!enemies){alert("ERROR: Game not loaded. Start a level first, then try again.");return}var origGetDamaged=enemies[0]?.constructor?.prototype?.getDamaged;if(!origGetDamaged){alert("ERROR: Could not find enemy damage method.");return}enemies[0].constructor.prototype.getDamaged=function(dmg,type,ability,crit,set,pokemon,tower){if(tower?.pokemon?.item?.id==="bicycle"){dmg=Infinity}return origGetDamaged.call(this,dmg,type,ability,crit,set,pokemon,tower)};window._bikeInstakillEnabled=true;alert("Bicycle instakill ENABLED!\\n\\nAny Pokemon with the Bicycle equipped will now one-shot enemies.\\n\\nEffect lasts until the game is closed.")})()';
+    clipboardCopy(cmd, instakillBtn);
   });
 })();
 </script>
