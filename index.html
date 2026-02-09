@@ -348,13 +348,10 @@
     <div class="details-body">
       <p style="margin-bottom: .8rem;">These inject directly into your save data. Use a separate paste from the item command above.</p>
 
-      <div class="exp-pokemon-row">
-        <label class="exp-pokemon-opt">
-          <input type="checkbox" id="gholdengo-cb" value="gholdengo">
-          <span class="poke-name">Gholdengo</span>
-          <span class="item-tag tag-secret">SECRET</span>
-        </label>
-        <button class="copy-btn-exp" id="copy-btn-poke" disabled>Copy Command</button>
+      <div class="exp-row">
+        <span class="exp-label">Gholdengo</span>
+        <span class="item-tag tag-secret">SECRET</span>
+        <button class="copy-btn-exp" id="copy-btn-poke">Copy Command</button>
       </div>
       <p class="exp-note">Adds a Lv.1 Gholdengo to your PC box. In-game this is normally unlocked by purchasing the Gimmighoul item for 10 billion gold.</p>
 
@@ -686,15 +683,9 @@ localStorage.<span class="func">setItem</span>(<span class="string">"data"</span
   });
 
   // Gholdengo unlock
-  var gholdCb = document.getElementById('gholdengo-cb');
   var gholdBtn = document.getElementById('copy-btn-poke');
 
-  gholdCb.addEventListener('change', function() {
-    gholdBtn.disabled = !gholdCb.checked;
-  });
-
   gholdBtn.addEventListener('click', function() {
-    if (!gholdCb.checked) return;
     gtag('event', 'copy_gholdengo');
     var cmd = '(function(){var d=JSON.parse(localStorage.getItem("data"));if(!d||!d.save){alert("ERROR: No save data found. Play the game first, then try again.");return}if(!Array.isArray(d.save.box))d.save.box=[];var team=d.save.team||[];var all=d.save.box.concat(team);if(all.some(function(p){return p.specieKey==="gholdengo"})){alert("You already have Gholdengo!");return}d.save.box.push({specieKey:"gholdengo",lvl:1,targetMode:"first",favorite:false,item:null,isShiny:false,hideShiny:false,isMega:false});localStorage.setItem("data",JSON.stringify(d));alert("Gholdengo added to your PC box!\\n\\nRestart the game for changes to take effect.")})()';
     clipboardCopy(cmd, gholdBtn);
@@ -725,7 +716,7 @@ localStorage.<span class="func">setItem</span>(<span class="string">"data"</span
 
   instakillBtn.addEventListener('click', function() {
     gtag('event', 'copy_instakill');
-    var cmd = '(function(){if(window._bikeInstakillEnabled){alert("Bicycle instakill is already enabled!");return}var enemies=window.main?.area?.enemies;if(!enemies){alert("ERROR: Game not loaded. Start a level first, then try again.");return}var origGetDamaged=enemies[0]?.constructor?.prototype?.getDamaged;if(!origGetDamaged){alert("ERROR: Could not find enemy damage method.");return}enemies[0].constructor.prototype.getDamaged=function(dmg,type,ability,crit,set,pokemon,tower){if(tower?.pokemon?.item?.id==="bicycle"){dmg=Infinity}return origGetDamaged.call(this,dmg,type,ability,crit,set,pokemon,tower)};window._bikeInstakillEnabled=true;alert("Bicycle instakill ENABLED!\\n\\nAny Pokemon with the Bicycle equipped will now one-shot enemies.\\n\\nEffect lasts until the game is closed.")})()';
+    var cmd = '(function(){if(window._bikeInstakillEnabled){alert("Bicycle instakill is already enabled!");return}if(!window.main){alert("ERROR: Game not loaded. Get to the map screen first.");return}var patch=function(){var enemies=window.main?.area?.enemies;if(!enemies||!enemies[0])return false;var proto=enemies[0].constructor.prototype;if(proto._origGetDamaged)return true;proto._origGetDamaged=proto.getDamaged;proto.getDamaged=function(dmg,type,ability,crit,set,pokemon,tower){if(tower?.pokemon?.item?.id==="bicycle")dmg=Infinity;return proto._origGetDamaged.call(this,dmg,type,ability,crit,set,pokemon,tower)};return true};if(patch()){window._bikeInstakillEnabled=true;alert("Bicycle instakill ENABLED!")}else{var i=setInterval(function(){if(patch()){clearInterval(i);window._bikeInstakillEnabled=true;alert("Bicycle instakill ENABLED!")}},500);alert("Waiting for enemies to spawn... Start a wave!")}})()';
     clipboardCopy(cmd, instakillBtn);
   });
 })();
